@@ -7,8 +7,6 @@ on:
 
 jobs:
   deploy:
-    # Only continue if the commit message has '[deploy]' in it
-    if: contains(toJson(github.event.commits), '[deploy]') == true
     name: Deploy Docker images
     runs-on: ubuntu-20.04
     steps:
@@ -43,6 +41,12 @@ jobs:
         run: echo ${LATEST_TAG}
       - name: Update tag in docs and files
         run: ./update_tag_in_docs_and_files.sh ${LATEST_TAG} ${NEXT_TAG}
+      # This step is required in order to use buildx provided by Docker. More on this here: https://github.com/docker/setup-buildx-action
+      - name: Set up QEMU dependency
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
       - name: Build images
         run: VERSION="${GRID_VERSION}" BUILD_DATE=${BUILD_DATE} make build
       - name: Login Docker Hub
